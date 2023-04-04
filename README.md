@@ -2,7 +2,7 @@
 
 1. Create `.env` file and fill with real tokens and id's (example is in `.sample.env`)
 
-2. Run:
+2. Run `yarn start`:
 ```console
 foo@bar:~$ yarn start
 yarn run v1.22.17
