@@ -1,10 +1,12 @@
-import fetch from "node-fetch";
+import axios from "axios";
 import clipboardy from "clipboardy";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const clockifyBaseUrl = "https://api.clockify.me/api/v1";
+
+// TODO: api is deprecated, use new api
 const todoistBaseUrl = "https://api.todoist.com/rest/v2";
 
 const clockifyUserId = process.env.CLOCKIFY_USER_ID;
@@ -12,23 +14,24 @@ const clockifyWorkspaceId = process.env.CLOCKIFY_WORKSPACE_ID;
 const clockifyApiKey = process.env.CLOCKIFY_API_KEY;
 const todoistApiKey = process.env.TODOIST_API_KEY;
 const todoistProjectId = process.env.TODOIST_PROJECT_ID;
+const todoistEnabled = process.env.TODOIST_ENABLED !== "false";
 
 const clockifyPath = `workspaces/${clockifyWorkspaceId}/user/${clockifyUserId}/time-entries?start=${lastWorkday().toISOString()}`;
 const todoistTasksPath = `tasks?project_id=${todoistProjectId}`;
 
 async function main() {
-  const res = await fetch(`${clockifyBaseUrl}/${clockifyPath}`, {
+  const res = await axios.get(`${clockifyBaseUrl}/${clockifyPath}`, {
     headers: {
       "X-Api-Key": clockifyApiKey,
     },
   });
 
-  const data = await res.json();
+  const data = res.data;
 
   const done = clockifyReport(
     unique(data.reverse().map((item) => item.description))
   );
-  const todo = await getTodoistReport();
+  const todo = todoistEnabled ? await getTodoistReport() : null;
   clipboardy.writeSync(markdownReport(done, todo));
   console.log("Report is copied to your clipboard successfully!");
 }
@@ -36,7 +39,8 @@ async function main() {
 main();
 
 function markdownReport(done, todo) {
-  return `**Что делал:**\n${done}\n\n**Что планирую:**\n${todo}`;
+  const todoSection = todo !== null ? `\n\n**Что планирую:**\n${todo}` : "";
+  return `**Что делал:**\n${done}${todoSection}`;
 }
 
 function clockifyReport(arr) {
@@ -62,13 +66,13 @@ function unique(arr) {
 }
 
 async function getTodoistReport() {
-  const res = await fetch(`${todoistBaseUrl}/${todoistTasksPath}`, {
+  const res = await axios.get(`${todoistBaseUrl}/${todoistTasksPath}`, {
     headers: {
       Authorization: `Bearer ${todoistApiKey}`,
     },
   });
 
-  const data = await res.json();
+  const data = res.data;
   return data
     .filter(
       ({ due, is_completed }) => due && isToday(due.date) && !is_completed
