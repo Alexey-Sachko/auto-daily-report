@@ -39,8 +39,9 @@ async function main() {
 main();
 
 function markdownReport(done, todo) {
+  const previousDate = formatDate(lastWorkday());
   const todoSection = todo !== null ? `\n\n**Что планирую:**\n${todo}` : "";
-  return `**Что делал:**\n${done}${todoSection}`;
+  return `**Отчёт за ${previousDate}:**\n${done}${todoSection}`;
 }
 
 function clockifyReport(arr) {
@@ -59,6 +60,13 @@ function lastWorkday() {
   const date = new Date();
   date.setDate(date.getDate() - (date.getDay() === 1 ? 3 : 1));
   return date;
+}
+
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function unique(arr) {
