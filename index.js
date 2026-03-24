@@ -45,11 +45,14 @@ function markdownReport(done, todo) {
 }
 
 function clockifyReport(arr) {
-  return arr.map(markdownTask).join("\n");
+  return arr.map(markdownTask).join("\n\n");
 }
 
 function markdownTask(item) {
-  if (/\[[\w\d-]+/.test(item)) {
+  // Jira-style key at start: letters/underscores, hyphen, digits (e.g. LND_CRMZ-1038 …)
+  const jiraAtStart = /^\s*[A-Z][A-Z0-9_]*-\d+(?=\s|$)/.test(item);
+  const legacyBracket = /\[[\w\d-]+/.test(item);
+  if (jiraAtStart || legacyBracket) {
     return `- \`${item}\` - `;
   }
 
